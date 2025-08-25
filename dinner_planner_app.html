@@ -1,0 +1,466 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="planner-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Dinner Planner">
+<meta name="theme-color" content="#f7c7da">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>✨ Dinner Planner — Dual Store + Global Sync</title>
+<style>
+:root{--blush:#f7c7da;--rose:#f5ddef;--ink:#2e2e2e;--muted:#6b6b6b;--bg:#fffafc;--card:#ffffff;--line:#efe6ee;--accent:#f3b0ce}
+*{box-sizing:border-box}
+body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","Helvetica Neue",Arial,sans-serif;background:var(--bg);color:var(--ink);overflow-x:auto}
+header{position:sticky;top:0;z-index:5;background:linear-gradient(90deg,var(--blush),var(--rose));padding:14px 16px;text-align:center;font-weight:700;box-shadow:0 1px 0 rgba(0,0,0,.04)}
+header small{display:block;font-weight:500;color:#333}
+.wrap{display:grid;grid-template-columns:250px 250px;gap:14px;padding:14px;width:514px;margin:auto}
+.tabs{display:flex;gap:8px;justify-content:center;padding:10px 12px;flex-wrap:wrap;background:#fff0f7;border-bottom:1px solid var(--line)}
+.tab{border:1px solid var(--line);background:var(--card);padding:6px 12px;border-radius:16px;cursor:pointer;font-weight:600;font-size:13px}
+.tab.active{background:var(--blush);border-color:#e9a9c6}
+.week{display:none}.week.active{display:block}
+.day-list{display:grid;grid-template-columns:1fr;gap:8px}
+.day{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:8px;display:flex;flex-direction:column}
+.day .dow{font-weight:700;color:#6b5363;margin-bottom:4px}
+.meal{border:1px dashed #ead5e5;background:#fff7fb;border-radius:8px;padding:6px}
+.pill{display:inline-block;font-size:10px;font-weight:700;background:#f6e6f2;border:1px solid #efd9ea;color:#6b5363;padding:2px 6px;border-radius:999px;margin-bottom:2px}
+.name{font-weight:700;font-size:13px;margin:2px 0}
+.ingredients{font-size:11px;color:#555;line-height:1.3}
+.actions{display:flex;gap:4px;margin-top:4px;flex-wrap:wrap}
+.btn{border:none;background:var(--blush);padding:4px 6px;border-radius:8px;cursor:pointer;font-weight:600;font-size:11px}
+.secondary{background:#f1eef5}
+.quick-box{display:none;margin-top:6px;background:#fff;border:1px solid var(--line);border-radius:8px;padding:6px;font-size:11px}
+.quick-box ol{margin:.2rem 0 .2rem 1rem}
+.panel{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:8px;height:max-content}
+.panel h3{margin:0 0 6px;font-size:14px}
+.scope{display:flex;gap:4px;align-items:center;margin:4px 0 6px}
+.scope select{flex:1;padding:4px 6px;border-radius:8px;border:1px solid var(--line);background:#fff;font-size:11px}
+.gcat h5{margin:6px 0 4px;font-size:12px;color:#6b5363}
+.gitem{display:grid;grid-template-columns:1fr 54px 54px 16px;gap:4px;align-items:center;padding:2px 0;border-bottom:1px dashed #eee;font-size:11px}
+.gitem:last-child{border-bottom:none}
+.gitem label{display:flex;gap:6px;align-items:center}
+.gname[contenteditable="true"]{outline:1px dashed transparent;border-radius:4px;padding:1px 2px}
+.gname[contenteditable="true"]:focus{outline:1px dashed var(--accent);background:#fff5fb}
+.price{display:flex;gap:2px;align-items:center;justify-content:flex-end}
+.price input{width:48px;padding:2px 4px;border-radius:6px;border:1px solid var(--line);text-align:right;font-size:11px}
+.total{margin-top:6px;padding-top:6px;border-top:1px solid var(--line);display:grid;grid-template-columns:1fr auto;row-gap:4px;font-weight:700;font-size:12px}
+.subrow{display:flex;justify-content:space-between;gap:8px}
+.toolbar{display:flex;gap:4px;margin-top:6px;flex-wrap:wrap}
+.toolbar button{border:none;background:#f1eef5;padding:4px 6px;border-radius:8px;cursor:pointer;font-weight:600;font-size:11px}
+.toast{position:fixed;right:12px;bottom:12px;background:#222;color:#fff;padding:6px 8px;border-radius:8px;opacity:0;transform:translateY(10px);transition:.25s;font-size:11px}
+.toast.show{opacity:1;transform:translateY(0)}
+.small{font-size:11px;color:#555;margin-top:6px}
+</style>
+</head>
+<body>
+<header>
+  <div>✨ Quick, Easy, Yummy & Healthy — 5-Ingredient Dinner Planner</div>
+  <small>Two fixed 250px columns • GLOBAL names & prices (Master ↔ Week sync) • Aldi & Publix totals • Save works</small>
+</header>
+
+<div class="tabs" id="tabs"></div>
+
+<div class="wrap">
+  <main id="weeks"></main>
+  <aside class="panel" aria-live="polite">
+    <h3>🛒 Smart Grocery</h3>
+    <div class="scope">
+      <label for="scopeSel">Scope:</label>
+      <select id="scopeSel">
+        <option value="master">Master (All Weeks)</option>
+        <option value="w1">Week 1</option>
+        <option value="w2">Week 2</option>
+        <option value="w3">Week 3</option>
+        <option value="w4">Week 4</option>
+      </select>
+    </div>
+    <div id="grocery"></div>
+    <div class="total">
+      <div class="subrow"><span>Subtotal (Aldi)</span><span>$<span id="subtotalAldi">0.00</span></span></div>
+      <div class="subrow"><span>Subtotal (Publix)</span><span>$<span id="subtotalPublix">0.00</span></span></div>
+    </div>
+    <div class="toolbar">
+      <button id="selectAll">Select All</button>
+      <button id="clearChecks">Clear Checks</button>
+      <button id="resetPrices">Reset Prices</button>
+      <button id="saveAll">Save</button>
+    </div>
+    <div class="small">Tip: tap item names to edit. Prices & names autosave, and **Save** snapshots the whole list.</div>
+  </aside>
+</div>
+
+<div id="toast" class="toast"></div>
+
+<script>
+/* ---------- DATA with slightly-expanded Quick Steps ---------- */
+const MEALS = [
+  {label:"Seafood", name:"Lemon Garlic Salmon", ingredients:[
+    {name:"Salmon fillet", qty:"1 lb", cat:"Protein", price:8.50},
+    {name:"Lemon", qty:"1", cat:"Produce", price:0.75},
+    {name:"Garlic", qty:"3 cloves", cat:"Produce", price:0.50},
+    {name:"Broccoli", qty:"1 head", cat:"Produce", price:2.00},
+    {name:"Rice", qty:"1 cup", cat:"Pantry", price:0.60},
+  ], steps:[
+    "Heat oven to 400°F with a foil-lined sheet pan. Pat salmon dry.",
+    "Mix minced garlic with a little oil and salt; spread on salmon. Top with lemon slices.",
+    "Roast 10–12 min until flaky (145°F internal).",
+    "Steam broccoli 4–5 min; season with salt + a squeeze of lemon. Serve with hot rice."
+  ]},
+
+  {label:"Chicken", name:"15-Min Chicken Stir-Fry", ingredients:[
+    {name:"Chicken breast", qty:"1 lb", cat:"Protein", price:6.98},
+    {name:"Frozen stir-fry veg", qty:"1 bag", cat:"Frozen", price:3.50},
+    {name:"Soy sauce", qty:"3 tbsp", cat:"Pantry", price:0.40},
+    {name:"Garlic", qty:"2 cloves", cat:"Produce", price:0.35},
+    {name:"Rice", qty:"1 cup", cat:"Pantry", price:0.60},
+  ], steps:[
+    "Cook rice first (stovetop or microwave packet).",
+    "Hot skillet: 1 tbsp oil, chicken strips + salt/pepper; sear 5–6 min.",
+    "Add minced garlic + frozen veg; stir 3–4 min until hot.",
+    "Splash in soy sauce; toss and serve over rice."
+  ]},
+
+  {label:"Pasta", name:"Pasta Primavera", ingredients:[
+    {name:"Pasta (not whole-grain)", qty:"12 oz", cat:"Pantry", price:1.50},
+    {name:"Mixed veggies", qty:"12 oz", cat:"Produce", price:3.00},
+    {name:"Olive oil", qty:"2 tbsp", cat:"Pantry", price:0.40},
+    {name:"Parmesan", qty:"1/2 cup", cat:"Dairy", price:2.50},
+    {name:"Lemon", qty:"1/2", cat:"Produce", price:0.40},
+  ], steps:[
+    "Boil pasta in salted water; reserve 1/4 cup cooking water.",
+    "Sauté veggies in olive oil with a pinch of salt until bright-tender.",
+    "Toss pasta + veggies with parmesan and a splash of pasta water; finish with lemon juice."
+  ]},
+
+  {label:"Seafood", name:"Shrimp Tacos", ingredients:[
+    {name:"Shrimp", qty:"1 lb", cat:"Protein", price:8.99},
+    {name:"Tortillas", qty:"8", cat:"Bakery", price:2.49},
+    {name:"Bagged slaw mix", qty:"1 bag", cat:"Produce", price:2.19},
+    {name:"Lime", qty:"1", cat:"Produce", price:0.60},
+    {name:"Sour cream", qty:"1/2 cup", cat:"Dairy", price:1.20},
+  ], steps:[
+    "Season shrimp with salt, pepper, chili powder if you like.",
+    "Sear 2–3 min per side in a hot skillet. Warm tortillas.",
+    "Mix lime juice + sour cream for a quick crema. Fill tortillas with shrimp, slaw, crema."
+  ]},
+
+  {label:"Pasta", name:"Creamy Alfredo", ingredients:[
+    {name:"Pasta", qty:"12 oz", cat:"Pantry", price:1.50},
+    {name:"Butter", qty:"2 tbsp", cat:"Dairy", price:0.60},
+    {name:"Parmesan", qty:"1 cup", cat:"Dairy", price:3.00},
+    {name:"Garlic", qty:"2 cloves", cat:"Produce", price:0.35},
+    {name:"Milk", qty:"1 cup", cat:"Dairy", price:0.60},
+  ], steps:[
+    "Boil pasta until al dente.",
+    "Melt butter; add minced garlic 30 sec. Whisk in milk, then parmesan until silky.",
+    "Toss with pasta; loosen with pasta water; salt to taste."
+  ]},
+
+  {label:"Chicken", name:"Sheet-Pan Chicken & Veg", ingredients:[
+    {name:"Chicken thighs", qty:"1.5 lb", cat:"Protein", price:6.50},
+    {name:"Potatoes", qty:"1 lb", cat:"Produce", price:1.30},
+    {name:"Carrots", qty:"1 lb", cat:"Produce", price:1.10},
+    {name:"Onion", qty:"1", cat:"Produce", price:0.80},
+    {name:"Italian seasoning", qty:"1 tsp", cat:"Pantry", price:0.10},
+  ], steps:[
+    "Oven 425°F. Toss chopped potatoes, carrots, onion with oil, salt, Italian seasoning on a sheet pan.",
+    "Nestle chicken thighs on top; roast 25–30 min until chicken is 175°F and veggies are tender."
+  ]},
+
+  {label:"Seafood", name:"Garlic Butter Shrimp & Orzo", ingredients:[
+    {name:"Shrimp", qty:"1 lb", cat:"Protein", price:8.99},
+    {name:"Orzo", qty:"8 oz", cat:"Pantry", price:1.40},
+    {name:"Butter", qty:"2 tbsp", cat:"Dairy", price:0.60},
+    {name:"Garlic", qty:"3 cloves", cat:"Produce", price:0.50},
+    {name:"Parsley (optional)", qty:"", cat:"Produce", price:0.80},
+  ], steps:[
+    "Toast orzo in a little butter 1–2 min; add water/stock and simmer until tender.",
+    "Sauté shrimp in butter + garlic 2–3 min; fold into orzo and sprinkle parsley."
+  ]},
+
+  {label:"Veggie", name:"Caprese Pasta (light pesto)", ingredients:[
+    {name:"Pasta", qty:"12 oz", cat:"Pantry", price:1.50},
+    {name:"Cherry tomatoes", qty:"1 pint", cat:"Produce", price:2.50},
+    {name:"Mozzarella pearls", qty:"8 oz", cat:"Dairy", price:3.50},
+    {name:"Basil pesto", qty:"2 tbsp", cat:"Pantry", price:0.80},
+    {name:"Balsamic glaze", qty:"1 tbsp", cat:"Pantry", price:0.40},
+  ], steps:[
+    "Cook pasta; drain. Halve tomatoes.",
+    "Toss pasta with tomatoes, mozzarella, a *small* spoon of pesto, and a drizzle of balsamic glaze."
+  ]},
+
+  {label:"Beef", name:"Beef Taco Skillet", ingredients:[
+    {name:"Lean ground beef", qty:"1 lb", cat:"Protein", price:5.50},
+    {name:"Black beans (canned)", qty:"1 can", cat:"Pantry", price:1.10},
+    {name:"Corn (frozen)", qty:"1 cup", cat:"Frozen", price:0.90},
+    {name:"Taco seasoning", qty:"1 pkt", cat:"Pantry", price:0.60},
+    {name:"Rice", qty:"1 cup", cat:"Pantry", price:0.60},
+  ], steps:[
+    "Brown beef; drain if needed. Add beans, corn, taco seasoning + a splash of water; simmer 2–3 min.",
+    "Serve over rice and add salsa or cheese if you like."
+  ]},
+
+  {label:"Veggie", name:"Baked Gnocchi & Marinara", ingredients:[
+    {name:"Shelf-stable gnocchi", qty:"1 lb", cat:"Pantry", price:2.50},
+    {name:"Marinara", qty:"24 oz", cat:"Pantry", price:2.00},
+    {name:"Mozzarella", qty:"1 cup", cat:"Dairy", price:1.80},
+    {name:"Spinach", qty:"4 oz", cat:"Produce", price:1.50},
+    {name:"Parmesan", qty:"1/4 cup", cat:"Dairy", price:0.80},
+  ], steps:[
+    "Stir gnocchi + marinara + spinach in a baking dish; top with mozzarella and parmesan.",
+    "Bake 20 min at 400°F until bubbly and browned at the edges."
+  ]},
+
+  {label:"Chicken", name:"Chicken Quesadillas", ingredients:[
+    {name:"Chicken breast", qty:"12 oz", cat:"Protein", price:5.50},
+    {name:"Tortillas", qty:"8", cat:"Bakery", price:2.49},
+    {name:"Shredded cheese", qty:"1.5 cups", cat:"Dairy", price:2.80},
+    {name:"Salsa", qty:"1/2 cup", cat:"Pantry", price:1.20},
+    {name:"Bell pepper", qty:"1", cat:"Produce", price:1.00},
+  ], steps:[
+    "Cook seasoned chicken fully; slice thin.",
+    "Add chicken + cheese + sliced pepper to tortillas; griddle until cheese melts and tortillas are crisp."
+  ]},
+
+  {label:"Seafood", name:"Simple Shrimp Scampi", ingredients:[
+    {name:"Shrimp", qty:"1 lb", cat:"Protein", price:8.99},
+    {name:"Pasta", qty:"12 oz", cat:"Pantry", price:1.50},
+    {name:"Butter", qty:"2 tbsp", cat:"Dairy", price:0.60},
+    {name:"Garlic", qty:"3 cloves", cat:"Produce", price:0.50},
+    {name:"Lemon", qty:"1/2", cat:"Produce", price:0.40},
+  ], steps:[
+    "Boil pasta in salted water.",
+    "Sauté shrimp with butter and garlic 2–3 min; toss with pasta and lemon juice; season with salt."
+  ]},
+
+  {label:"Veggie", name:"Tomato Basil Soup & Toasties", ingredients:[
+    {name:"Tomato soup", qty:"1 can", cat:"Pantry", price:1.60},
+    {name:"Bread", qty:"4 slices", cat:"Bakery", price:1.00},
+    {name:"Cheddar", qty:"4 slices", cat:"Dairy", price:1.60},
+    {name:"Butter", qty:"2 tbsp", cat:"Dairy", price:0.60},
+    {name:"Spinach", qty:"1 handful", cat:"Produce", price:0.60},
+  ], steps:[
+    "Warm soup in a saucepan. For toasties, butter bread, add cheddar and spinach; griddle until golden.",
+    "Serve soup with toasties for dunking."
+  ]},
+];
+
+const WEEKS = [
+  ["Lemon Garlic Salmon","15-Min Chicken Stir-Fry","Leftovers","Shrimp Tacos","Pasta Primavera","Pizza Night","Leftovers"],
+  ["Sheet-Pan Chicken & Veg","Baked Gnocchi & Marinara","Leftovers","Beef Taco Skillet","Caprese Pasta (light pesto)","Free Snack Night","Leftovers"],
+  ["Garlic Butter Shrimp & Orzo","Simple Shrimp Scampi","Leftovers","Chicken Quesadillas","Tomato Basil Soup & Toasties","Free Snack Night","Leftovers"],
+  ["Pasta Primavera","Sheet-Pan Chicken & Veg","Leftovers","Lemon Garlic Salmon","Chicken Quesadillas","Free Snack Night","Leftovers"],
+];
+
+const DAYS=["Mon","Tue","Wed","Thu","Fri","Sat","Sun"];
+const MEAL_OPTIONS=["Leftovers","Free Snack Night","Pizza Night",...MEALS.map(m=>m.name)];
+const $=(s,c=document)=>c.querySelector(s),$$=(s,c=document)=>Array.from(c.querySelectorAll(s));
+
+/* ===== Storage (GLOBAL names & prices) ===== */
+const LS={
+  checksKey: s=>`checks_dual_${s}`,         // per-scope
+  GLOBAL_NAMES: 'global_names',             // {id: displayName}
+  GLOBAL_PRICES: 'global_prices',           // {id:{aldi,publix}}
+  activeWeek:'wk_dual_active',
+  scope:'scope_dual_active'
+};
+const itemId = name => name.toLowerCase().trim().replace(/[^a-z0-9]+/g,"-");
+
+/* ---------- Tabs & Weeks ---------- */
+function buildTabs(){const tabs=$("#tabs");tabs.innerHTML="";for(let i=1;i<=4;i++){const b=document.createElement("button");b.className="tab"+(i===1?" active":"");b.dataset.week=i;b.textContent=`Week ${i}`;b.onclick=()=>setActiveWeek(i);tabs.appendChild(b)}}
+function setActiveWeek(i){$$(".tab").forEach(b=>b.classList.toggle("active",b.dataset.week==i));$$(".week").forEach((w,idx)=>w.classList.toggle("active",idx===i-1));localStorage.setItem(LS.activeWeek,i)}
+function mealByName(n){return MEALS.find(m=>m.name===n)}
+function buildWeeks(){
+  const main=$("#weeks");main.innerHTML="";
+  WEEKS.forEach((week,wi)=>{
+    const sec=document.createElement("section");sec.className="week"+(wi===0?" active":"");
+    const list=document.createElement("div");list.className="day-list";
+    week.forEach((mealName,di)=>{
+      const row=document.createElement("div");row.className="day";row.dataset.wi=wi;row.dataset.di=di;
+      row.innerHTML=`<div class="dow">${DAYS[di]}</div>`;row.appendChild(buildMealTile(mealName));list.appendChild(row);
+    });
+    sec.appendChild(list);main.appendChild(sec);
+  });
+}
+function buildMealTile(mealName){
+  const tile=document.createElement("div");tile.className="meal";
+  const special=["Leftovers","Free Snack Night","Pizza Night"].includes(mealName);
+  if(special){
+    tile.innerHTML=`<span class="pill">${mealName}</span>
+      <div class="name">${mealName==="Free Snack Night"?"Grazing board / fruit & dips":mealName}</div>
+      <div class="ingredients">No new ingredients.</div>
+      <div class="swap-row">
+        <select class="swap" aria-label="Swap meal">${MEAL_OPTIONS.map(n=>`<option ${n===mealName?'selected':''}>${n}</option>`).join("")}</select>
+        <button class="btn secondary" data-action="set">Set</button>
+      </div>`;
+    return tile;
+  }
+  const m=mealByName(mealName);
+  tile.innerHTML=`
+    <span class="pill">${m.label}</span>
+    <div class="name">${m.name}</div>
+    <div class="ingredients">${m.ingredients.map(i=>`${i.qty?i.qty+' ':''}${i.name}`).join(" • ")}</div>
+    <div class="actions"><button class="btn" data-action="steps">Quick Steps</button></div>
+    <div class="quick-box"><ol>${m.steps.map(s=>`<li>${s}</li>`).join("")}</ol></div>
+    <div class="swap-row">
+      <select class="swap" aria-label="Swap meal">${MEAL_OPTIONS.map(n=>`<option ${n===m.name?'selected':''}>${n}</option>`).join("")}</select>
+      <button class="btn secondary" data-action="set">Set</button>
+    </div>`;
+  return tile;
+}
+function updateMeal(wi,di,newName){WEEKS[wi][di]=newName;buildWeeks();setActiveWeek(parseInt(localStorage.getItem(LS.activeWeek)||"1",10));renderGrocery($("#scopeSel").value)}
+
+/* ---------- Grocery (GLOBAL names & prices) ---------- */
+function aggregateItems(scope){
+  const addItem=(map,item)=>{const id=itemId(item.name); if(!map[id]) map[id]={id,name:item.name,cat:item.cat,base:item.price}};
+  const map={}; const addMeal=(name)=>{const m=mealByName(name); if(m) m.ingredients.forEach(it=>addItem(map,it));};
+  if(scope==="master"){WEEKS.flat().forEach(addMeal);} else { const idx={w1:0,w2:1,w3:2,w4:3}[scope]; WEEKS[idx].forEach(addMeal); }
+  const cats={}; Object.values(map).forEach(it=>{(cats[it.cat] ||= []).push(it)}); Object.values(cats).forEach(a=>a.sort((x,y)=>x.name.localeCompare(y.name)));
+  return cats;
+}
+function renderGrocery(scope){
+  const container=$("#grocery"); container.innerHTML="";
+  const groups=aggregateItems(scope);
+  const checks=JSON.parse(localStorage.getItem(LS.checksKey(scope))||"{}");        // per-scope
+  const gnames=JSON.parse(localStorage.getItem(LS.GLOBAL_NAMES)||"{}");            // global
+  const gprices=JSON.parse(localStorage.getItem(LS.GLOBAL_PRICES)||"{}");          // global
+
+  Object.keys(groups).sort().forEach(cat=>{
+    const catDiv=document.createElement("div");catDiv.className="gcat";catDiv.innerHTML=`<h5>${cat}</h5>`;
+    groups[cat].forEach(item=>{
+      const id=item.id;
+      const displayName = gnames[id] || item.name;
+      const aldi = (gprices[id]?.aldi ?? item.base).toFixed(2);
+      const publix = (gprices[id]?.publix ?? (item.base*1.15)).toFixed(2);
+
+      const row=document.createElement("div"); row.className="gitem"; row.dataset.id=id;
+      row.innerHTML=`
+        <label>
+          <input type="checkbox" ${checks[id]?'checked':''} data-id="${id}">
+          <span class="gname" contenteditable="true" data-id="${id}">${displayName}</span>
+        </label>
+        <div class="price"><span class="muted">A</span>
+          <input type="number" min="0" step="0.01" value="${aldi}" data-id="${id}" data-store="aldi">
+        </div>
+        <div class="price"><span class="muted">P</span>
+          <input type="number" min="0" step="0.01" value="${publix}" data-id="${id}" data-store="publix">
+        </div>
+        <button class="btn secondary" title="Remove">–</button>`;
+
+      // Checkbox
+      row.querySelector("input[type='checkbox']").onchange=e=>{
+        const c=JSON.parse(localStorage.getItem(LS.checksKey(scope))||"{}"); c[id]=e.target.checked;
+        localStorage.setItem(LS.checksKey(scope), JSON.stringify(c)); updateSubtotal(scope);
+      };
+
+      // Prices (GLOBAL autosave)
+      row.querySelectorAll("input[type='number']").forEach(pi=>{
+        pi.oninput=e=>{
+          const p=JSON.parse(localStorage.getItem(LS.GLOBAL_PRICES)||"{}");
+          const id=e.target.dataset.id, store=e.target.dataset.store;
+          if(!p[id]) p[id]={aldi:0,publix:0};
+          p[id][store]=parseFloat(e.target.value)||0;
+          localStorage.setItem(LS.GLOBAL_PRICES, JSON.stringify(p));
+          updateSubtotal(scope);
+        };
+      });
+
+      // Editable name (GLOBAL autosave)
+      const nameSpan=row.querySelector(".gname");
+      nameSpan.addEventListener("blur", e=>{
+        const newName=e.target.textContent.trim()||"Item";
+        const nm=JSON.parse(localStorage.getItem(LS.GLOBAL_NAMES)||"{}"); nm[id]=newName;
+        localStorage.setItem(LS.GLOBAL_NAMES, JSON.stringify(nm));
+      });
+
+      // Remove row
+      row.querySelector("button").onclick=()=>{
+        row.remove();
+        const c=JSON.parse(localStorage.getItem(LS.checksKey(scope))||"{}");
+        const p=JSON.parse(localStorage.getItem(LS.GLOBAL_PRICES)||"{}");
+        const nm=JSON.parse(localStorage.getItem(LS.GLOBAL_NAMES)||"{}");
+        delete c[id]; delete p[id]; delete nm[id];
+        localStorage.setItem(LS.checksKey(scope), JSON.stringify(c));
+        localStorage.setItem(LS.GLOBAL_PRICES, JSON.stringify(p));
+        localStorage.setItem(LS.GLOBAL_NAMES, JSON.stringify(nm));
+        updateSubtotal(scope);
+      };
+
+      catDiv.appendChild(row);
+    });
+    container.appendChild(catDiv);
+  });
+  updateSubtotal(scope);
+}
+function updateSubtotal(scope){
+  let totalA=0,totalP=0; const box=$("#grocery");
+  box.querySelectorAll("input[type='checkbox']").forEach(cb=>{
+    if(cb.checked){
+      const id=cb.dataset.id;
+      const inA=box.querySelector(`input[data-id='${id}'][data-store='aldi']`);
+      const inP=box.querySelector(`input[data-id='${id}'][data-store='publix']`);
+      totalA += parseFloat(inA.value)||0; totalP += parseFloat(inP.value)||0;
+    }
+  });
+  $("#subtotalAldi").textContent = totalA.toFixed(2);
+  $("#subtotalPublix").textContent = totalP.toFixed(2);
+}
+
+/* Toolbar */
+$("#selectAll").onclick=()=>{
+  const scope=$("#scopeSel").value; const checks={};
+  $("#grocery").querySelectorAll("input[type='checkbox']").forEach(cb=>{cb.checked=true; checks[cb.dataset.id]=true;});
+  localStorage.setItem(LS.checksKey(scope), JSON.stringify(checks)); updateSubtotal(scope);
+};
+$("#clearChecks").onclick=()=>{
+  const scope=$("#scopeSel").value; localStorage.setItem(LS.checksKey(scope), JSON.stringify({})); renderGrocery(scope);
+};
+$("#resetPrices").onclick=()=>{
+  localStorage.removeItem(LS.GLOBAL_PRICES); renderGrocery($("#scopeSel").value);
+};
+$("#saveAll").onclick=()=>{
+  const scope=$("#scopeSel").value;
+  const checks={}, prices={}, names={};
+  $("#grocery").querySelectorAll(".gitem").forEach(row=>{
+    const id=row.dataset.id;
+    const cb=row.querySelector("input[type='checkbox']");
+    const name=row.querySelector(".gname").textContent.trim();
+    const inA=row.querySelector("input[data-store='aldi']");
+    const inP=row.querySelector("input[data-store='publix']");
+    checks[id]=cb.checked;
+    prices[id]={aldi: parseFloat(inA.value)||0, publix: parseFloat(inP.value)||0};
+    names[id]=name;
+  });
+  // Persist GLOBAL names/prices + per-scope checks
+  localStorage.setItem(LS.GLOBAL_NAMES, JSON.stringify(names));
+  localStorage.setItem(LS.GLOBAL_PRICES, JSON.stringify(prices));
+  localStorage.setItem(LS.checksKey(scope), JSON.stringify(checks));
+  showToast("Saved ✔");
+  updateSubtotal(scope);
+};
+
+/* ---------- Init ---------- */
+function init(){
+  buildTabs(); buildWeeks();
+  const savedWeek=parseInt(localStorage.getItem(LS.activeWeek)||"1",10);
+  setActiveWeek(savedWeek>=1&&savedWeek<=4?savedWeek:1);
+  const storedScope=localStorage.getItem(LS.scope)||"master";
+  $("#scopeSel").value=storedScope;
+  $("#scopeSel").onchange=e=>{ localStorage.setItem(LS.scope,e.target.value); renderGrocery(e.target.value); };
+  renderGrocery(storedScope);
+
+  // Steps + Set handlers
+  $("#weeks").addEventListener("click",e=>{
+    const btn=e.target.closest("button"); if(!btn) return;
+    const row=btn.closest(".day"); if(!row) return;
+    const wi=parseInt(row.dataset.wi), di=parseInt(row.dataset.di);
+    const action=btn.dataset.action;
+    if(action==="steps"){ const qb=row.querySelector(".quick-box"); if(qb){ qb.style.display = (qb.style.display==="none"||qb.style.display==="") ? "block" : "none"; } }
+    if(action==="set"){ const sel=row.querySelector("select.swap"); if(sel){ updateMeal(wi,di,sel.value); } }
+  });
+}
+document.addEventListener("DOMContentLoaded", init);
+</script>
+</body>
+</html>

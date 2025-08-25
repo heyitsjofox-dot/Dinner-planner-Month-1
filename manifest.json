@@ -1,0 +1,20 @@
+{
+  "name": "5-Ingredient Dinner Planner",
+  "short_name": "Dinner Planner",
+  "start_url": "./dinner_planner_app.html",
+  "display": "standalone",
+  "background_color": "#fffafc",
+  "theme_color": "#f7c7da",
+  "icons": [
+    {
+      "src": "./planner-icon.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "./planner-icon.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
