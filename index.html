@@ -1,1 +1,203 @@
-<!DOCTYPE html><html><head><title>Cycle Planner</title></head><body><h1>Cycle Planner</h1></body></html><img src="phase_guide.jpg" alt="Cycle guide" />
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Cycle-Sync Planner — Month 1</title>
+  <link rel="manifest" href="manifest.json">
+  <link rel="icon" href="planner-icon.png">
+  <link rel="apple-touch-icon" href="planner-icon.png">
+  <meta name="theme-color" content="#f7c7da"/>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <header class="app-header">
+    <div class="brand">
+      <div class="fox-logo">🦊</div>
+      <div class="titles">
+        <h1>Cycle-Sync Planner</h1>
+        <p class="sub">Month-view • Week-view • Daily cards • Smart Grocery</p>
+      </div>
+    </div>
+    <nav class="top-actions">
+      <button id="settingsBtn" class="ghost">⚙️ Settings</button>
+      <button id="refreshAdsBtn" class="ghost">🛒 Refresh Ads</button>
+      <button id="viewMonthBtn" class="solid">Month</button>
+      <button id="viewWeekBtn" class="ghost">Week</button>
+      <button id="viewGroceryBtn" class="ghost">Grocery</button>
+    </nav>
+  </header>
+
+  <main>
+    <section class="month-nav">
+      <button id="prevMonth" title="Previous month">‹</button>
+      <h2 id="monthLabel"></h2>
+      <button id="nextMonth" title="Next month">›</button>
+    </section>
+
+    <section id="calendarView" class="calendar">
+      <div class="dow">Sun</div>
+      <div class="dow">Mon</div>
+      <div class="dow">Tue</div>
+      <div class="dow">Wed</div>
+      <div class="dow">Thu</div>
+      <div class="dow">Fri</div>
+      <div class="dow">Sat</div>
+      <div id="calendarGrid" class="grid"></div>
+    </section>
+
+    <section id="weekView" class="hidden">
+      <div class="week-header">
+        <button id="prevWeek">‹</button>
+        <h2 id="weekLabel">Week</h2>
+        <button id="nextWeek">›</button>
+      </div>
+      <div id="weekDays" class="week-days"></div>
+    </section>
+
+    <section id="groceryView" class="hidden">
+      <div class="grocery-actions">
+        <label>Scope:
+          <select id="groceryScope">
+            <option value="month">Master (All Weeks)</option>
+          </select>
+        </label>
+        <div class="totals">
+          <div>Subtotal (Aldi): $<span id="totalAldi">0.00</span></div>
+          <div>Subtotal (Publix): $<span id="totalPublix">0.00</span></div>
+        </div>
+      </div>
+
+      <div class="grocery-table">
+        <div class="g-head">Item</div>
+        <div class="g-head small">Qty</div>
+        <div class="g-head small">Unit</div>
+        <div class="g-head small">Aldi</div>
+        <div class="g-head small">Publix</div>
+        <div class="g-head small">Fav</div>
+
+        <div id="groceryRows" class="g-rows"></div>
+      </div>
+
+      <div class="grocery-buttons">
+        <button id="addGroceryItem">Add Item</button>
+        <button id="saveGrocery">Save</button>
+        <button id="clearChecked">Clear Checks</button>
+      </div>
+    </section>
+  </main>
+
+  <dialog id="dayModal">
+    <form method="dialog" class="day-card">
+      <header>
+        <h3 id="modalDate"></h3>
+        <button id="closeModal" value="close" class="ghost">✕</button>
+      </header>
+
+      <section class="cycle-info">
+        <div class="cycle-line">
+          <strong>Cycle phase:</strong> <span id="modalPhase"></span>
+          <div class="cycle-buttons">
+            <button type="button" data-phase="menstrual" class="chip">Menstrual</button>
+            <button type="button" data-phase="follicular" class="chip">Follicular</button>
+            <button type="button" data-phase="ovulation" class="chip">Ovulation</button>
+            <button type="button" data-phase="luteal" class="chip">Luteal</button>
+          </div>
+        </div>
+        <p id="phaseDetails"></p>
+        <div class="phase-guide">
+          <img src="phase_guide.jpg" alt="Cycle guide" />
+        </div>
+      </section>
+
+      <section class="meals">
+        <h4>Meals (≤5 ingredients • auto-varied)</h4>
+        <div class="meal-row">
+          <label>Breakfast</label>
+          <select id="breakfastSelect"></select>
+          <button type="button" class="mini" id="favBreakfast">★</button>
+        </div>
+        <div class="meal-row">
+          <label>Lunch</label>
+          <select id="lunchSelect"></select>
+          <button type="button" class="mini" id="favLunch">★</button>
+        </div>
+        <div class="meal-row">
+          <label>Dinner</label>
+          <select id="dinnerSelect"></select>
+          <button type="button" class="mini" id="favDinner">★</button>
+        </div>
+
+        <details id="recipeDetails" open>
+          <summary>Recipe directions</summary>
+          <div id="recipeBody"></div>
+        </details>
+      </section>
+
+      <section class="workout">
+        <h4>Workout (cycle-appropriate, HR friendly)</h4>
+        <div id="workoutPlan"></div>
+      </section>
+
+      <footer class="modal-actions">
+        <button id="addCustomMeal" type="button">Add</button>
+        <button id="deleteDay" type="button" class="danger">Delete</button>
+        <button id="saveDay" type="submit" class="solid">Save</button>
+        <button id="favDay" type="button">Favorite</button>
+      </footer>
+    </form>
+  </dialog>
+
+  <dialog id="settingsModal">
+    <form method="dialog" class="settings-card">
+      <header>
+        <h3>Settings</h3>
+        <button value="close" class="ghost">✕</button>
+      </header>
+
+      <section class="columns">
+        <div>
+          <h4>Your Stats</h4>
+          <label>Sex
+            <select id="sex">
+              <option value="female" selected>Female</option>
+              <option value="male">Male</option>
+            </select>
+          </label>
+          <label>Age <input type="number" id="age" value="39"></label>
+          <label>Height (cm) <input type="number" id="height" value="165"></label>
+          <label>Weight (kg) <input type="number" id="weight" value="70"></label>
+          <label>Goal: 
+            <select id="goal">
+              <option value="lose" selected>Lose (~500 kcal deficit)</option>
+              <option value="maintain">Maintain</option>
+              <option value="gain">Gain (~+300 kcal)</option>
+            </select>
+          </label>
+          <label>Activity:
+            <select id="activity">
+              <option value="sedentary">Sedentary</option>
+              <option value="light" selected>Light</option>
+              <option value="moderate">Moderate</option>
+            </select>
+          </label>
+        </div>
+        <div>
+          <h4>Cycle</h4>
+          <label>Last period start <input type="date" id="lastPeriod"></label>
+          <label>Cycle length (days) <input type="number" id="cycleLen" value="28"></label>
+        </div>
+      </section>
+
+      <footer class="modal-actions">
+        <button id="saveSettings" class="solid">Save</button>
+      </footer>
+    </form>
+  </dialog>
+
+  <script type="module" src="data_meals.js"></script>
+  <script type="module" src="data_workouts.js"></script>
+  <script type="module" src="ads_fetchers.js"></script>
+  <script type="module" src="app.js"></script>
+</body>
+</html>
