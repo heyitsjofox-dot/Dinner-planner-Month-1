@@ -1,1 +1,75 @@
-body{font-family:sans-serif;}
+:root {
+  --bg:#fff9fc; --card:#fff; --ink:#1d1a22; --ink-soft:#594e60;
+  --rose:#f7c7da; --berry:#9a5a7b; --mint:#d3f0ea; --line:#efe4ed; --chip:#f5eaf1;
+}
+* { box-sizing: border-box }
+html, body {
+  margin:0; padding:0;
+  background:var(--bg); color:var(--ink);
+  font-family: ui-sans-serif,-apple-system,system-ui,'Segoe UI',Roboto,'Helvetica Neue',Arial,'Noto Sans';
+}
+/* --- header --- */
+.app-header {
+  display:flex; align-items:center; justify-content:space-between;
+  padding:12px 16px; border-bottom:1px solid var(--line);
+  position:sticky; top:0; background:var(--bg); z-index:10;
+}
+.brand { display:flex; align-items:center; gap:12px }
+.fox-logo { font-size:28px }
+.titles h1 { margin:0; font-size:20px }
+.titles .sub { margin:2px 0 0; color:var(--ink-soft); font-size:12px }
+.top-actions button { margin-left:8px }
+
+/* --- buttons --- */
+button { border:1px solid var(--rose); background:#fff; padding:8px 12px; border-radius:10px; cursor:pointer }
+button.solid { background:var(--rose) }
+button.ghost { background:transparent; border-color:var(--line) }
+button.danger { border-color:#f0b3b3; background:#ffecec }
+button.mini { padding:2px 6px; border-radius:8px }
+
+/* --- month calendar --- */
+.month-nav { display:flex; align-items:center; justify-content:center; gap:12px; padding:8px }
+.month-nav h2 { min-width:220px; text-align:center }
+.calendar { max-width:1100px; margin:0 auto; padding:0 8px }
+.calendar .dow { display:grid; grid-template-columns:repeat(7,1fr); gap:8px; margin:8px 0 6px }
+.calendar .dow>* { text-align:center; color:var(--ink-soft) }
+.calendar .grid { display:grid; grid-template-columns:repeat(7,1fr); gap:8px }
+.day-cell { background:var(--card); border:1px solid var(--line); border-radius:14px; min-height:120px; padding:8px; display:flex; flex-direction:column }
+.day-head { display:flex; align-items:center; justify-content:space-between }
+.day-head .date { font-weight:600 }
+.phase-badge { font-size:11px; background:var(--chip); padding:2px 6px; border-radius:999px; border:1px dashed var(--rose) }
+.meal-mini { margin-top:6px; color:var(--ink-soft); font-size:12px; line-height:1.35 }
+.day-cell button { align-self:flex-start; margin-top:auto }
+
+/* --- week view --- */
+.week-header { display:flex; justify-content:center; align-items:center; gap:12px; margin-top:8px }
+.week-days { display:grid; grid-template-columns:repeat(7,1fr); gap:8px; padding:8px; max-width:1100px; margin:0 auto }
+.week-card { background:var(--card); border:1px solid var(--line); border-radius:14px; padding:10px }
+.week-card header { display:flex; justify-content:space-between; margin-bottom:6px }
+.week-card .mini-list { font-size:12px; color:var(--ink-soft) }
+
+/* --- grocery --- */
+.grocery-actions { display:flex; justify-content:space-between; align-items:center; max-width:900px; margin:12px auto 6px; padding:0 8px }
+.grocery-table { display:grid; grid-template-columns:1.2fr .5fr .5fr .5fr .5fr .3fr; gap:6px; max-width:900px; margin:0 auto; padding:8px }
+.g-head { font-weight:600; color:var(--ink-soft) }
+.g-row { display:contents }
+.g-row input[type="text"], .g-row input[type="number"] { width:100% }
+.g-rows .cell { background:var(--card); border:1px solid var(--line); padding:8px; border-radius:10px }
+.g-rows .small { max-width:120px }
+.grocery-buttons { display:flex; gap:8px; max-width:900px; margin:8px auto 16px; justify-content:flex-end; padding:0 8px }
+
+/* --- dialogs --- */
+dialog { border:none; border-radius:16px; padding:0; max-width:720px; width:calc(100% - 24px) }
+.day-card, .settings-card { padding:14px }
+.day-card header, .settings-card header { display:flex; justify-content:space-between; align-items:center }
+.cycle-info { background:var(--card); border:1px solid var(--line); border-radius:14px; padding:10px; margin-top:8px }
+.cycle-buttons { display:flex; gap:6px; margin-top:6px; flex-wrap:wrap }
+.chip { background:var(--chip); border:1px dashed var(--rose) }
+.phase-guide img { width:100%; border-radius:12px; margin-top:8px }
+.meals, .workout { margin-top:10px }
+.meal-row { display:grid; grid-template-columns:120px 1fr 40px; gap:8px; align-items:center; margin:6px 0 }
+details summary { cursor:pointer }
+.modal-actions { display:flex; justify-content:flex-end; gap:8px; margin-top:10px }
+.settings-card .columns { display:grid; grid-template-columns:1fr 1fr; gap:12px }
+.settings-card label { display:block; margin:8px 0 }
+.hidden { display:none }
